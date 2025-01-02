@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phonk Remixer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1e1e2f 0%, #2d2b42 100%);
+            color: #fff;
+            min-height: 100vh;
+        }
+        .upload-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            margin-top: 2rem;
+        }
+        .file-input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .btn-primary {
+            background: linear-gradient(45deg, #7b2ff7, #f107a3);
+            border: none;
+            padding: 0.8rem 2rem;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(45deg, #6620d4, #d1067f);
+        }
+        .result-container {
+            margin-top: 2rem;
+        }
+        #loadingSpinner {
+            display: none;
+        }
+        .title {
+            font-size: 3rem;
+            background: linear-gradient(45deg, #7b2ff7, #f107a3);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="text-center mb-4">
+                    <h1 class="title">Phonk Remixer</h1>
+                    <p class="lead">Transform your classical music into phonk style remixes</p>
+                </div>
+                <div class="upload-container">
+                    <form id="uploadForm">
+                        <div class="file-input">
+                            <label for="classical">Classical Music (WAV)</label>
+                            <input type="file" class="form-control" id="classical" name="classical" accept=".wav" required>
+                        </div>
+                        <div class="file-input">
+                            <label for="vocal">Vocal Track (WAV)</label>
+                            <input type="file" class="form-control" id="vocal" name="vocal" accept=".wav" required>
+                        </div>
+                        <div class="file-input">
+                            <label for="kick">Kick Sound (WAV)</label>
+                            <input type="file" class="form-control" id="kick" name="kick" accept=".wav" required>
+                        </div>
+                        <div class="file-input">
+                            <label for="snare">Snare Sound (WAV)</label>
+                            <input type="file" class="form-control" id="snare" name="snare" accept=".wav" required>
+                        </div>
+                        <div class="file-input">
+                            <label for="hi_hat">Hi-Hat Sound (WAV)</label>
+                            <input type="file" class="form-control" id="hi_hat" name="hi_hat" accept=".wav" required>
+                        </div>
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                Create Phonk Remix
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="result-container text-center">
+                    <div id="loadingSpinner" class="spinner-border text-light" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <div id="result" class="mt-4"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            formData.append('classical', document.getElementById('classical').files[0]);
+            formData.append('vocal', document.getElementById('vocal').files[0]);
+            formData.append('kick', document.getElementById('kick').files[0]);
+            formData.append('snare', document.getElementById('snare').files[0]);
+            formData.append('hi_hat', document.getElementById('hi_hat').files[0]);
+
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const resultDiv = document.getElementById('result');
+            
+            loadingSpinner.style.display = 'inline-block';
+            resultDiv.innerHTML = '';
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            ${data.message}
+                        </div>
+                        <div class="mt-4">
+                            <h3>Your Phonk Remix</h3>
+                            <div class="mt-3">
+                                <audio controls preload="auto" class="w-100">
+                                    <source src="${data.audio}" type="audio/wav">
+                                    Your browser does not support the audio element.
+                                </audio>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-danger">
+                            ${data.error}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        An error occurred while processing your request.
+                    </div>
+                `;
+            } finally {
+                loadingSpinner.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
